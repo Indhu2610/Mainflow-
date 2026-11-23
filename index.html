@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MaintFlow - Maintenance Material & PR Workflow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #fafafa;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .insta-gradient {
+      background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    }
+  </style>
+</head>
+<body class="text-slate-800 pb-20">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-full shadow-lg text-xs font-medium z-50 hidden flex items-center space-x-2 transition-opacity">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toast-msg">Action successful</span>
+  </div>
+
+  <!-- ==================== INSTAGRAM STYLE LOGIN SCREEN ==================== -->
+  <div id="login-screen" class="min-h-screen flex flex-col justify-center items-center px-5 bg-white">
+    <div class="w-full max-w-sm space-y-6">
+      
+      <!-- Logo & Brand -->
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 mx-auto rounded-2xl insta-gradient flex items-center justify-center text-white text-3xl shadow-md">
+          <i class="fa-solid fa-wrench"></i>
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">MaintFlow</h1>
+        <p class="text-xs text-slate-500">Maintenance Material & PR Approval Portal</p>
+      </div>
+
+      <!-- Login Form -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3.5">
+        <div>
+          <input type="text" id="login-id" placeholder="User ID (e.g., karthik, manager, purchase)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-slate-800" />
+        </div>
+        <div class="relative">
+          <input type="password" id="login-pass" placeholder="Password" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-slate-800" />
+          <button type="button" onclick="togglePass()" class="absolute right-3 top-2.5 text-slate-400 text-xs font-semibold">Show</button>
+        </div>
+        
+        <p id="login-error" class="text-xs text-red-500 font-medium hidden text-center">Invalid User ID or Password!</p>
+
+        <button onclick="handleLogin()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm active:scale-95 transition">
+          Log In
+        </button>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-200"></div>
+          <span class="flex-shrink mx-3 text-[11px] text-slate-400 font-semibold uppercase">Quick Demo Logins</span>
+          <div class="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        <!-- Quick Fill Buttons for Easy Testing -->
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <button onclick="fillLogin('karthik', '1234')" class="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-left">
+            <span class="font-bold text-slate-800 block">Karthik (Officer)</span>
+            <span class="text-slate-400">ID: karthik / 1234</span>
+          </button>
+          <button onclick="fillLogin('suresh', '1234')" class="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-left">
+            <span class="font-bold text-slate-800 block">Suresh (Officer)</span>
+            <span class="text-slate-400">ID: suresh / 1234</span>
+          </button>
+          <button onclick="fillLogin('manager', '1234')" class="p-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-left">
+            <span class="font-bold text-amber-900 block">Maint. Manager</span>
+            <span class="text-amber-700">ID: manager / 1234</span>
+          </button>
+          <button onclick="fillLogin('purchase', '1234')" class="p-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-left">
+            <span class="font-bold text-emerald-900 block">PR / PO Team</span>
+            <span class="text-emerald-700">ID: purchase / 1234</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APP CONTAINER (HIDDEN UNTIL LOGIN) ==================== -->
+  <div id="app-container" class="hidden">
+
+    <!-- Top App Bar (Instagram Profile Header Style) -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+          <!-- User Avatar Ring -->
+          <div class="p-[2px] rounded-full insta-gradient">
+            <div class="bg-white p-[2px] rounded-full">
+              <div id="user-avatar" class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
+                K
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center space-x-1">
+              <h1 id="header-username" class="font-bold text-sm text-slate-900 leading-tight">Karthik</h1>
+              <i class="fa-solid fa-circle-check text-blue-500 text-[11px]"></i>
+            </div>
+            <p id="header-role" class="text-[11px] text-slate-500 font-medium">Maintenance Officer</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <button onclick="resetDemoData()" title="Reset Demo Data" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-lg">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+          <button onclick="handleLogout()" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-semibold px-2.5 py-1.5 rounded-lg border border-red-200">
+            <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-md mx-auto px-4 pt-4">
+
+      <!-- ==================== VIEW 1: MAINTENANCE OFFICER ==================== -->
+      <section id="view-officer" class="space-y-4 hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-slate-800">My Material Requests</h2>
+            <p class="text-xs text-slate-500">Raise request with quotation to Maintenance Manager</p>
+          </div>
+          <button onclick="toggleNewForm()" id="btn-new-req" class="bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-sm flex items-center space-x-1.5 active:scale-95 transition">
+            <i class="fa-solid fa-plus"></i>
+            <span>New Request</span>
+          </button>
+        </div>
+
+        <!-- New Request Form -->
+        <div id="new-req-form" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hidden space-y-3">
+          <div class="flex justify-between items-center border-b pb-2">
+            <h3 class="font-bold text-sm text-slate-800">Raise Material Request</h3>
+            <button onclick="toggleNewForm()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Material / Spare Name *</label>
+            <input type="text" id="inp-item" placeholder="e.g., SKF Bearing 6205-2Z" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Quantity & Unit *</label>
+              <input type="text" id="inp-qty" placeholder="e.g., 4 Nos" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Urgency *</label>
+              <select id="inp-urgency" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-blue-500">
+                <option value="Normal">Normal</option>
+                <option value="Urgent">Urgent</option>
+                <option value="Breakdown">Breakdown (Critical)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Machine / Line & Remarks</label>
+            <input type="text" id="inp-machine" placeholder="e.g., CNC Line 2 - Motor replacement" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+          </div>
+
+          <!-- Quotation File Attachment -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Attach Quotation (PDF / Image) *</label>
+            <label class="flex items-center justify-center w-full px-3 py-2.5 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-100 transition">
+              <div class="flex items-center space-x-2 text-xs text-slate-600">
+                <i class="fa-solid fa-paperclip text-blue-500 text-sm"></i>
+                <span id="file-label" class="font-medium truncate max-w-[220px]">Tap to attach Quotation file...</span>
+              </div>
+              <input type="file" id="inp-quote" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" class="hidden" onchange="handleFileSelect(event)" />
+            </label>
+          </div>
+
+          <button onclick="submitRequest()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-sm shadow active:scale-95 transition">
+            <i class="fa-solid fa-paper-plane mr-1.5 text-amber-400"></i> Send to Maintenance Manager
+          </button>
+        </div>
+
+        <!-- Officer Request List -->
+        <div class="space-y-3" id="list-officer"></div>
+      </section>
+
+      <!-- ==================== VIEW 2: MAINTENANCE MANAGER ==================== -->
+      <section id="view-mm" class="space-y-4 hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-slate-800">Maintenance Manager</h2>
+            <p class="text-xs text-slate-500">Review quotation & approve officer requests</p>
+          </div>
+          <span id="badge-mm" class="bg-red-500 text-white text-xs px-2.5 py-1 rounded-full font-bold hidden">0 Pending</span>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="flex space-x-2 text-xs">
+          <button onclick="setMMFilter('pending')" id="mm-filter-pending" class="px-3 py-1.5 rounded-full font-semibold bg-slate-900 text-white">Pending Approval</button>
+          <button onclick="setMMFilter('all')" id="mm-filter-all" class="px-3 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200">All History</button>
+        </div>
+
+        <div class="space-y-3" id="list-mm"></div>
+      </section>
+
+      <!-- ==================== VIEW 3: AUTHORIZED USER (PR -> FM -> PO) ==================== -->
+      <section id="view-pr" class="space-y-4 hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-slate-800">PR & Purchase Processing</h2>
+            <p class="text-xs text-slate-500">Maintenance Manager approved items</p>
+          </div>
+          <span id="badge-pr" class="bg-emerald-600 text-white text-xs px-2.5 py-1 rounded-full font-bold hidden">0 Active</span>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="flex space-x-2 text-xs overflow-x-auto hide-scrollbar">
+          <button onclick="setPRFilter('action')" id="pr-filter-action" class="px-3 py-1.5 rounded-full font-semibold bg-slate-900 text-white whitespace-nowrap">Action Needed</button>
+          <button onclick="setPRFilter('completed')" id="pr-filter-completed" class="px-3 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200 whitespace-nowrap">PO Completed</button>
+        </div>
+
+        <div class="space-y-3" id="list-pr"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // ==================== USER ACCOUNTS DATABASE ====================
+    const usersDB = [
+      { id: 'karthik', pass: '1234', name: 'Karthik', role: 'officer', roleTitle: 'Maintenance Officer' },
+      { id: 'suresh', pass: '1234', name: 'Suresh', role: 'officer', roleTitle: 'Maintenance Officer' },
+      { id: 'manager', pass: '1234', name: 'Rajesh Kumar', role: 'mm', roleTitle: 'Maintenance Manager' },
+      { id: 'purchase', pass: '1234', name: 'Priya (PR/PO)', role: 'pr', roleTitle: 'PR & Purchase Authorized' }
+    ];
+
+    let currentUser = JSON.parse(localStorage.getItem('maintflow_user')) || null;
+    let selectedQuoteFile = null;
+
+    // Initial Sample Data
+    const defaultRequests = [
+      {
+        id: 'REQ-1042',
+        item: 'Hydraulic Solenoid Valve 24V DC',
+        qty: '2 Nos',
+        urgency: 'Breakdown',
+        machine: 'Press Machine #04',
+        officerId: 'karthik',
+        officer: 'Karthik',
+        date: 'Today, 09:15 AM',
+        quoteName: 'Rexroth_Quotation_402.pdf',
+        quoteData: null,
+        status: 'PENDING_MM',
+        mmRemarks: '',
+        prNumber: '',
+        fmApproved: false,
+        poNumber: ''
+      },
+      {
+        id: 'REQ-1041',
+        item: 'V-Belt B-52 Fenner',
+        qty: '6 Nos',
+        urgency: 'Urgent',
+        machine: 'Compressor Room - Unit 2',
+        officerId: 'suresh',
+        officer: 'Suresh',
+        date: 'Yesterday, 04:30 PM',
+        quoteName: 'Fenner_Quote_118.pdf',
+        quoteData: null,
+        status: 'APPROVED_MM',
+        mmRemarks: 'Approved by Maintenance Manager. Raise PR.',
+        prNumber: '',
+        fmApproved: false,
+        poNumber: ''
+      }
+    ];
+
+    let requests = JSON.parse(localStorage.getItem('maintflow_data_v2')) || defaultRequests;
+    let mmFilter = 'pending';
+    let prFilter = 'action';
+
+    // ==================== LOGIN & AUTH LOGIC ====================
+    function fillLogin(id, pass) {
+      document.getElementById('login-id').value = id;
+      document.getElementById('login-pass').value = pass;
+      document.getElementById('login-error').classList.add('hidden');
+    }
+
+    function togglePass() {
+      const inp = document.getElementById('login-pass');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    function handleLogin() {
+      const idInput = document.getElementById('login-id').value.trim().toLowerCase();
+      const passInput = document.getElementById('login-pass').value.trim();
+
+      const matchedUser = usersDB.find(u => u.id === idInput && u.pass === passInput);
+
+      if (!matchedUser) {
+        document.getElementById('login-error').classList.remove('hidden');
+        return;
+      }
+
+      currentUser = matchedUser;
+      localStorage.setItem('maintflow_user', JSON.stringify(currentUser));
+      document.getElementById('login-error').classList.add('hidden');
+      initAppSession();
+      showToast(`Welcome back, ${currentUser.name}!`);
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      localStorage.removeItem('maintflow_user');
+      document.getElementById('app-container').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('login-id').value = '';
+      document.getElementById('login-pass').value = '';
+    }
+
+    function initAppSession() {
+      if (!currentUser) {
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('app-container').classList.add('hidden');
+        return;
+      }
+
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app-container').classList.remove('hidden');
+
+      // Set Logged-in User Name & Role in Header
+      document.getElementById('header-username').innerText = currentUser.name;
+      document.getElementById('header-role').innerText = currentUser.roleTitle;
+      document.getElementById('user-avatar').innerText = currentUser.name.charAt(0).toUpperCase();
+
+      // Show only the view belonging to logged-in user's role
+      document.getElementById('view-officer').classList.add('hidden');
+      document.getElementById('view-mm').classList.add('hidden');
+      document.getElementById('view-pr').classList.add('hidden');
+
+      if (currentUser.role === 'officer') {
+        document.getElementById('view-officer').classList.remove('hidden');
+      } else if (currentUser.role === 'mm') {
+        document.getElementById('view-mm').classList.remove('hidden');
+      } else if (currentUser.role === 'pr') {
+        document.getElementById('view-pr').classList.remove('hidden');
+      }
+
+      updateBadges();
+      renderAll();
+    }
+
+    // ==================== FILE ATTACHMENT HANDLING ====================
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Limit size to 1.5MB for localStorage safety
+      if (file.size > 1.5 * 1024 * 1024) {
+        alert('File is too large! Please attach a Quotation file under 1.5 MB.');
+        event.target.value = '';
+        return;
+      }
+
+      document.getElementById('file-label').innerText = file.name;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        selectedQuoteFile = {
+          name: file.name,
+          data: e.target.result
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function viewQuotation(id) {
+      const req = requests.find(r => r.id === id);
+      if (!req || !req.quoteName) return;
+
+      if (req.quoteData) {
+        const win = window.open();
+        win.document.write(`<iframe src="${req.quoteData}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+      } else {
+        alert(`Sample Quotation File: ${req.quoteName}\n(Attach a real PDF/Image when creating a new request to preview it directly!)`);
+      }
+    }
+
+    // ==================== CORE DATA & ACTIONS ====================
+    function saveData() {
+      localStorage.setItem('maintflow_data_v2', JSON.stringify(requests));
+      updateBadges();
+      renderAll();
+    }
+
+    function resetDemoData() {
+      if(confirm('Reset all requests to default sample data?')) {
+        requests = JSON.parse(JSON.stringify(defaultRequests));
+        saveData();
+        showToast('Demo data reset!');
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2500);
+    }
+
+    function toggleNewForm() {
+      const form = document.getElementById('new-req-form');
+      form.classList.toggle('hidden');
+    }
+
+    function submitRequest() {
+      const item = document.getElementById('inp-item').value.trim();
+      const qty = document.getElementById('inp-qty').value.trim();
+      const urgency = document.getElementById('inp-urgency').value;
+      const machine = document.getElementById('inp-machine').value.trim();
+
+      if (!item || !qty) {
+        alert('Please enter Material Name and Quantity.');
+        return;
+      }
+
+      if (!selectedQuoteFile) {
+        alert('Please attach the Quotation file before sending!');
+        return;
+      }
+
+      const newReq = {
+        id: 'REQ-' + (1040 + requests.length + 1),
+        item,
+        qty,
+        urgency,
+        machine: machine || 'General Maintenance',
+        officerId: currentUser.id,
+        officer: currentUser.name,
+        date: 'Just now',
+        quoteName: selectedQuoteFile.name,
+        quoteData: selectedQuoteFile.data,
+        status: 'PENDING_MM',
+        mmRemarks: '',
+        prNumber: '',
+        fmApproved: false,
+        poNumber: ''
+      };
+
+      requests.unshift(newReq);
+      
+      // Reset inputs
+      document.getElementById('inp-item').value = '';
+      document.getElementById('inp-qty').value = '';
+      document.getElementById('inp-machine').value = '';
+      document.getElementById('inp-quote').value = '';
+      document.getElementById('file-label').innerText = 'Tap to attach Quotation file...';
+      selectedQuoteFile = null;
+
+      toggleNewForm();
+      saveData();
+      showToast('Sent to Maintenance Manager!');
+    }
+
+    // Maintenance Manager Actions
+    function handleMMAction(id, action) {
+      const req = requests.find(r => r.id === id);
+      const remarkInput = document.getElementById(`mm-rem-${id}`);
+      const remark = remarkInput ? remarkInput.value.trim() : '';
+
+      if (action === 'approve') {
+        req.status = 'APPROVED_MM';
+        req.mmRemarks = remark || `Approved by ${currentUser.name} (Maintenance Manager)`;
+        showToast(`${id} Approved! Forwarded to PR Team.`);
+      } else {
+        if (!remark) {
+          alert('Please enter a reason in remarks before rejecting.');
+          return;
+        }
+        req.status = 'REJECTED_MM';
+        req.mmRemarks = remark;
+        showToast(`${id} Rejected.`);
+      }
+      saveData();
+    }
+
+    // PR / FM / PO Actions
+    function savePRNumber(id) {
+      const val = document.getElementById(`inp-pr-${id}`).value.trim();
+      if (!val) { alert('Enter PR Number'); return; }
+      const req = requests.find(r => r.id === id);
+      req.prNumber = val;
+      req.status = 'PR_RAISED';
+      saveData();
+      showToast('PR Number updated!');
+    }
+
+    function confirmFMApproval(id) {
+      const req = requests.find(r => r.id === id);
+      req.fmApproved = true;
+      req.status = 'FM_APPROVED';
+      saveData();
+      showToast('FM Approval recorded!');
+    }
+
+    function savePONumber(id) {
+      const val = document.getElementById(`inp-po-${id}`).value.trim();
+      if (!val) { alert('Enter PO Number'); return; }
+      const req = requests.find(r => r.id === id);
+      req.poNumber = val;
+      req.status = 'PO_ISSUED';
+      saveData();
+      showToast('PO Completed!');
+    }
+
+    function setMMFilter(f) {
+      mmFilter = f;
+      document.getElementById('mm-filter-pending').className = f === 'pending' ? 'px-3 py-1.5 rounded-full font-semibold bg-slate-900 text-white' : 'px-3 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200';
+      document.getElementById('mm-filter-all').className = f === 'all' ? 'px-3 py-1.5 rounded-full font-semibold bg-slate-900 text-white' : 'px-3 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200';
+      renderMM();
+    }
+
+    function setPRFilter(f) {
+      prFilter = f;
+      document.getElementById('pr-filter-action').className = f === 'action' ? 'px-3 py-1.5 rounded-full font-semibold bg-slate-900 text-white whitespace-nowrap' : 'px-3 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200 whitespace-nowrap';
+      document.getElementById('pr-filter-completed').className = f === 'completed' ? 'px-3 py-1.5 rounded-full font-semibold bg-slate-900 text-white whitespace-nowrap' : 'px-3 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200 whitespace-nowrap';
+      renderPR();
+    }
+
+    function updateBadges() {
+      const mmCount = requests.filter(r => r.status === 'PENDING_MM').length;
+      const prCount = requests.filter(r => ['APPROVED_MM', 'PR_RAISED', 'FM_APPROVED'].includes(r.status)).length;
+
+      const badgeMM = document.getElementById('badge-mm');
+      const badgePR = document.getElementById('badge-pr');
+
+      if (mmCount > 0) {
+        badgeMM.innerText = `${mmCount} Pending`;
+        badgeMM.classList.remove('hidden');
+      } else {
+        badgeMM.classList.add('hidden');
+      }
+
+      if (prCount > 0) {
+        badgePR.innerText = `${prCount} Active`;
+        badgePR.classList.remove('hidden');
+      } else {
+        badgePR.classList.add('hidden');
+      }
+    }
+
+    function getUrgencyBadge(urgency) {
+      if (urgency === 'Breakdown') return '<span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Breakdown</span>';
+      if (urgency === 'Urgent') return '<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Urgent</span>';
+      return '<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Normal</span>';
+    }
+
+    function getQuoteBadge(req) {
+      if (!req.quoteName) return '';
+      return `
+        <button onclick="viewQuotation('${req.id}')" class="mt-2 inline-flex items-center space-x-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition">
+          <i class="fa-solid fa-file-pdf text-red-500"></i>
+          <span class="truncate max-w-[180px]">${req.quoteName}</span>
+          <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-1"></i>
+        </button>
+      `;
+    }
+
+    function getProgressTracker(req) {
+      if (req.status === 'REJECTED_MM') {
+        return `<div class="mt-2 bg-red-50 border border-red-200 rounded-lg p-2 text-xs text-red-700">
+          <i class="fa-solid fa-circle-xmark mr-1"></i> <strong>Rejected by Maintenance Manager:</strong> ${req.mmRemarks}
+        </div>`;
+      }
+
+      const steps = [
+        { label: 'Raised', done: true },
+        { label: 'Mgr OK', done: ['APPROVED_MM', 'PR_RAISED', 'FM_APPROVED', 'PO_ISSUED'].includes(req.status) },
+        { label: 'PR', done: ['PR_RAISED', 'FM_APPROVED', 'PO_ISSUED'].includes(req.status) },
+        { label: 'FM OK', done: ['FM_APPROVED', 'PO_ISSUED'].includes(req.status) },
+        { label: 'PO Done', done: req.status === 'PO_ISSUED' }
+      ];
+
+      let html = '<div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px]">';
+      steps.forEach((s, idx) => {
+        const color = s.done ? 'text-emerald-600 font-bold' : 'text-slate-400';
+        const icon = s.done ? 'fa-circle-check text-emerald-500' : 'fa-circle text-slate-300';
+        html += `<div class="flex flex-col items-center ${color}">
+          <i class="fa-solid ${icon} text-xs mb-0.5"></i>
+          <span>${s.label}</span>
+        </div>`;
+        if (idx < steps.length - 1) {
+          html += `<div class="h-[2px] flex-1 mx-1 ${steps[idx+1].done ? 'bg-emerald-400' : 'bg-slate-200'}"></div>`;
+        }
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function renderOfficer() {
+      if (!currentUser || currentUser.role !== 'officer') return;
+      const container = document.getElementById('list-officer');
+      
+      // Filter requests raised by this specific logged-in officer
+      const myRequests = requests.filter(r => r.officerId === currentUser.id);
+
+      if (myRequests.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 bg-white rounded-2xl border border-slate-200 text-slate-400 text-sm">
+          Hi <strong>${currentUser.name}</strong>, you haven't raised any requests yet.<br>Tap <strong>"+ New Request"</strong> to start.
+        </div>`;
+        return;
+      }
+
+      container.innerHTML = myRequests.map(req => `
+        <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200">
+          <div class="flex justify-between items-start">
+            <span class="text-[11px] font-bold text-slate-400">${req.id} • ${req.date}</span>
+            ${getUrgencyBadge(req.urgency)}
+          </div>
+          <h3 class="font-bold text-slate-800 text-sm mt-1">${req.item} <span class="text-blue-600 font-extrabold">(${req.qty})</span></h3>
+          <p class="text-xs text-slate-500 mt-0.5"><i class="fa-solid fa-gear mr-1 text-slate-400"></i>${req.machine}</p>
+          
+          ${getQuoteBadge(req)}
+
+          ${req.prNumber || req.poNumber ? `
+            <div class="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+              ${req.prNumber ? `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-semibold">PR: ${req.prNumber}</span>` : ''}
+              ${req.poNumber ? `<span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-semibold">PO: ${req.poNumber}</span>` : ''}
+            </div>
+          ` : ''}
+
+          ${getProgressTracker(req)}
+        </div>
+      `).join('');
+    }
+
+    function renderMM() {
+      const container = document.getElementById('list-mm');
+      const filtered = mmFilter === 'pending' 
+        ? requests.filter(r => r.status === 'PENDING_MM') 
+        : requests;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 bg-white rounded-2xl border border-slate-200 text-slate-400 text-sm">
+          <i class="fa-solid fa-check-double text-2xl text-emerald-400 mb-2 block"></i>
+          No pending approvals!
+        </div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(req => `
+        <div class="bg-white p-3.5 rounded-2xl shadow-sm border ${req.status === 'PENDING_MM' ? 'border-amber-300' : 'border-slate-200'}">
+          <div class="flex justify-between items-start">
+            <span class="text-[11px] font-bold text-slate-400">${req.id} • ${req.date}</span>
+            ${getUrgencyBadge(req.urgency)}
+          </div>
+          <h3 class="font-bold text-slate-800 text-sm mt-1">${req.item} <span class="text-amber-600 font-extrabold">(${req.qty})</span></h3>
+          <p class="text-xs text-slate-600 mt-0.5"><i class="fa-solid fa-gear mr-1 text-slate-400"></i>${req.machine}</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Requested by: <strong>${req.officer}</strong></p>
+
+          ${getQuoteBadge(req)}
+
+          ${req.status === 'PENDING_MM' ? `
+            <div class="mt-3 pt-3 border-t border-slate-100 space-y-2">
+              <input type="text" id="mm-rem-${req.id}" placeholder="Add approval note or rejection reason..." class="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-slate-900" />
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="handleMMAction('${req.id}', 'reject')" class="py-2 rounded-xl border border-red-200 bg-red-50 text-red-600 font-bold text-xs hover:bg-red-100 active:scale-95 transition">
+                  <i class="fa-solid fa-xmark mr-1"></i> Reject
+                </button>
+                <button onclick="handleMMAction('${req.id}', 'approve')" class="py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 shadow-sm active:scale-95 transition">
+                  <i class="fa-solid fa-check mr-1"></i> Approve
+                </button>
+              </div>
+            </div>
+          ` : `
+            <div class="mt-2 pt-2 border-t border-slate-100 text-xs">
+              <span class="font-semibold ${req.status === 'REJECTED_MM' ? 'text-red-600' : 'text-emerald-600'}">
+                ${req.status === 'REJECTED_MM' ? 'Rejected' : 'Approved'}
+              </span>
+              <span class="text-slate-500"> — ${req.mmRemarks}</span>
+            </div>
+          `}
+        </div>
+      `).join('');
+    }
+
+    function renderPR() {
+      const container = document.getElementById('list-pr');
+      const filtered = prFilter === 'action'
+        ? requests.filter(r => ['APPROVED_MM', 'PR_RAISED', 'FM_APPROVED'].includes(r.status))
+        : requests.filter(r => r.status === 'PO_ISSUED');
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 bg-white rounded-2xl border border-slate-200 text-slate-400 text-sm">
+          No items in this view.
+        </div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(req => `
+        <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200">
+          <div class="flex justify-between items-start">
+            <span class="text-[11px] font-bold text-slate-400">${req.id} • Maintenance Manager Approved</span>
+            ${getUrgencyBadge(req.urgency)}
+          </div>
+          <h3 class="font-bold text-slate-800 text-sm mt-1">${req.item} <span class="text-amber-600 font-extrabold">(${req.qty})</span></h3>
+          <p class="text-xs text-slate-500 mt-0.5">${req.machine} • Req by ${req.officer}</p>
+          
+          ${getQuoteBadge(req)}
+
+          ${req.mmRemarks ? `<p class="text-[11px] bg-emerald-50 text-emerald-800 px-2 py-1 rounded mt-2"><i class="fa-solid fa-comment-dots mr-1"></i>Maintenance Manager: "${req.mmRemarks}"</p>` : ''}
+
+          <!-- Workflow Action Steps -->
+          <div class="mt-3 pt-3 border-t border-slate-100 space-y-2.5">
+            
+            <!-- Step A: PR Number -->
+            <div class="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <div class="text-xs">
+                <span class="font-bold text-slate-700 block">Step 1: Raise PR</span>
+                ${req.prNumber ? `<span class="text-blue-600 font-bold">${req.prNumber}</span>` : '<span class="text-slate-400 text-[11px]">Pending PR entry</span>'}
+              </div>
+              ${!req.prNumber ? `
+                <div class="flex space-x-1">
+                  <input type="text" id="inp-pr-${req.id}" placeholder="PR No." class="w-24 px-2 py-1 text-xs border rounded-lg bg-white" />
+                  <button onclick="savePRNumber('${req.id}')" class="bg-slate-900 text-white text-xs px-2.5 py-1 rounded-lg font-semibold">Save</button>
+                </div>
+              ` : '<i class="fa-solid fa-circle-check text-emerald-500"></i>'}
+            </div>
+
+            <!-- Step B: FM Approval -->
+            <div class="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200 ${!req.prNumber ? 'opacity-50 pointer-events-none' : ''}">
+              <div class="text-xs">
+                <span class="font-bold text-slate-700 block">Step 2: FM Approval</span>
+                <span class="text-[11px] ${req.fmApproved ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">
+                  ${req.fmApproved ? 'Approved by FM' : 'Awaiting FM sign-off'}
+                </span>
+              </div>
+              ${!req.fmApproved ? `
+                <button onclick="confirmFMApproval('${req.id}')" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-semibold shadow-sm">
+                  Mark FM OK
+                </button>
+              ` : '<i class="fa-solid fa-circle-check text-emerald-500"></i>'}
+            </div>
+
+            <!-- Step C: Purchase Office PO -->
+            <div class="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200 ${!req.fmApproved ? 'opacity-50 pointer-events-none' : ''}">
+              <div class="text-xs">
+                <span class="font-bold text-slate-700 block">Step 3: Purchase Office PO</span>
+                ${req.poNumber ? `<span class="text-emerald-700 font-bold">${req.poNumber}</span>` : '<span class="text-slate-400 text-[11px]">Enter PO from Purchase</span>'}
+              </div>
+              ${!req.poNumber ? `
+                <div class="flex space-x-1">
+                  <input type="text" id="inp-po-${req.id}" placeholder="PO No." class="w-24 px-2 py-1 text-xs border rounded-lg bg-white" />
+                  <button onclick="savePONumber('${req.id}')" class="bg-emerald-600 text-white text-xs px-2.5 py-1 rounded-lg font-semibold">Done</button>
+                </div>
+              ` : '<i class="fa-solid fa-circle-check text-emerald-500"></i>'}
+            </div>
+
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAll() {
+      renderOfficer();
+      renderMM();
+      renderPR();
+    }
+
+    // Start App
+    initAppSession();
+  </script>
+</body>
+</html>
